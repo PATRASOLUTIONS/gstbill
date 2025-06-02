@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { connectToDatabase } from "@/lib/database-service"
 import { getCurrentUserId } from "@/lib/auth-utils"
+import { ObjectId } from "mongodb"
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,30 +12,23 @@ export async function GET(request: NextRequest) {
 
     const { db } = await connectToDatabase()
 
-    // Get the current year
-    const currentYear = new Date().getFullYear()
-
-    // Find the latest invoice number for this year
+    // Get the latest invoice number for this user
     const latestInvoice = await db
       .collection("invoices")
-      .find({
-        userId,
-        invoiceNumber: { $regex: `INV-${currentYear}-` },
-      })
-      .sort({ invoiceNumber: -1 })
-      .limit(1)
-      .toArray()
+      .findOne({ userId: new ObjectId(userId) }, { sort: { createdAt: -1 } })
 
     let nextNumber = 1
-
-    if (latestInvoice.length > 0) {
-      // Extract the number from the latest invoice number
-      const latestNumber = latestInvoice[0].invoiceNumber.split("-")[2]
-      nextNumber = Number.parseInt(latestNumber) + 1
+    if (latestInvoice && latestInvoice.invoiceNumber) {
+      // Extract number from invoice number (e.g., "INV-2025-1036" -> 1036)
+      const match = latestInvoice.invoiceNumber.match(/(\d+)$/)
+      if (match) {
+        nextNumber = Number.parseInt(match[1]) + 1
+      }
     }
 
-    // Format the invoice number with leading zeros (4 digits)
-    const invoiceNumber = `INV-${currentYear}-${nextNumber.toString().padStart(4, "0")}`
+    // Generate invoice number in format INV-YYYY-NNNN
+    const year = new Date().getFullYear()
+    const invoiceNumber = `INV-${year}-${nextNumber.toString().padStart(4, "0")}`
 
     return NextResponse.json({ invoiceNumber })
   } catch (error) {

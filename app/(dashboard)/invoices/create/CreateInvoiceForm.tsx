@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -10,14 +9,22 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Textarea } from "@/components/ui/textarea"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { toast } from "@/hooks/use-toast"
 import { useSession } from "next-auth/react"
+import { CalendarIcon, Trash2 } from "lucide-react"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
+import { format } from "date-fns"
+import { cn } from "@/lib/utils"
 
 interface Product {
   _id: string
   name: string
   price: number
-  quantity: number
+  stock: number
+  category?: string
 }
 
 interface Customer {
@@ -25,84 +32,77 @@ interface Customer {
   name: string
   email: string
   phone: string
+  address?: string
+}
+
+interface InvoiceItem {
+  productId: string
+  productName: string
+  quantity: number
+  price: number
+  total: number
 }
 
 export default function CreateInvoiceForm() {
   const [customers, setCustomers] = useState<Customer[]>([])
   const [products, setProducts] = useState<Product[]>([])
-  const [availableProducts, setAvailableProducts] = useState<Product[]>([])
+  const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>([])
   const [selectedCustomer, setSelectedCustomer] = useState("")
   const [selectedProduct, setSelectedProduct] = useState("")
   const [productQuantity, setProductQuantity] = useState(1)
-  const [invoiceStatus, setInvoiceStatus] = useState("Pending")
-  const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split("T")[0])
+  const [invoiceType, setInvoiceType] = useState("gst")
+  const [paymentMethod, setPaymentMethod] = useState("bank-transfer")
+  const [invoiceDate, setInvoiceDate] = useState<Date>(new Date())
+  const [dueDate, setDueDate] = useState<Date>(new Date())
+  const [notes, setNotes] = useState("")
   const [loading, setLoading] = useState(false)
   const [nextInvoiceNumber, setNextInvoiceNumber] = useState("")
-  const [loadingInvoiceNumber, setLoadingInvoiceNumber] = useState(true)
+  const [loadingData, setLoadingData] = useState(true)
+
   const router = useRouter()
   const { data: session } = useSession()
 
   useEffect(() => {
-    // Call the database setup endpoint to ensure indexes
-    fetch("/api/db-setup").catch(console.error)
-
-    async function fetchCustomers() {
-      try {
-        const response = await fetch("/api/customers")
-        if (!response.ok) throw new Error("Failed to fetch customers")
-        const data = await response.json()
-        setCustomers(Array.isArray(data) ? data : [])
-      } catch (error) {
-        console.error("Error fetching customers:", error)
-        toast({
-          title: "Error",
-          description: "Failed to load customers. Please try again.",
-          variant: "destructive",
-        })
-      }
-    }
-
-    async function fetchProducts() {
-      try {
-        const response = await fetch("/api/products")
-        if (!response.ok) throw new Error("Failed to fetch products")
-        const data = await response.json()
-        setAvailableProducts(Array.isArray(data) ? data : [])
-      } catch (error) {
-        console.error("Error fetching products:", error)
-        toast({
-          title: "Error",
-          description: "Failed to load products. Please try again.",
-          variant: "destructive",
-        })
-      }
-    }
-
-    async function fetchNextInvoiceNumber() {
-      if (!session?.user?.id) return
-
-      setLoadingInvoiceNumber(true)
-      try {
-        const response = await fetch("/api/invoices/next-number")
-        if (!response.ok) throw new Error("Failed to fetch next invoice number")
-        const data = await response.json()
-        setNextInvoiceNumber(data.nextInvoiceNumber)
-      } catch (error) {
-        console.error("Error fetching next invoice number:", error)
-        toast({
-          title: "Error",
-          description: "Failed to determine next invoice number. A number will be assigned automatically.",
-          variant: "destructive",
-        })
-      } finally {
-        setLoadingInvoiceNumber(false)
-      }
-    }
-
-    fetchCustomers()
-    fetchProducts()
-    fetchNextInvoiceNumber()
+    fetchInitialData()
   }, [session?.user?.id])
+
+  const fetchInitialData = async () => {
+    if (!session?.user?.id) return
+
+    setLoadingData(true)
+    try {
+      // Fetch customers, products, and next invoice number in parallel
+      const [customersRes, productsRes, invoiceNumberRes] = await Promise.all([
+        fetch("/api/customers"),
+        fetch("/api/products"),
+        fetch("/api/invoices/generate-number"),
+      ])
+
+      if (customersRes.ok) {
+        const customersData = await customersRes.json()
+        setCustomers(Array.isArray(customersData) ? customersData : [])
+      }
+
+      if (productsRes.ok) {
+        const productsData = await productsRes.json()
+        setProducts(Array.isArray(productsData) ? productsData : [])
+      }
+
+      if (invoiceNumberRes.ok) {
+        const invoiceNumberData = await invoiceNumberRes.json()
+        setNextInvoiceNumber(invoiceNumberData.invoiceNumber || "")
+      }
+    } catch (error) {
+      console.error("Error fetching initial data:", error)
+      toast({
+        title: "Error",
+        description: "Failed to load initial data. Please refresh the page.",
+        variant: "destructive",
+      })
+    } finally {
+      setLoadingData(false)
+    }
+  }
 
   const addProduct = () => {
     if (!selectedProduct || productQuantity <= 0) {
@@ -114,16 +114,41 @@ export default function CreateInvoiceForm() {
       return
     }
 
-    const product = availableProducts.find((p) => p._id === selectedProduct)
-    if (!product) return
+    const product = products.find((p) => p._id === selectedProduct)
+    if (!product) {
+      toast({
+        title: "Error",
+        description: "Selected product not found.",
+        variant: "destructive",
+      })
+      return
+    }
 
-    const existingProduct = products.find((p) => p._id === selectedProduct)
-    if (existingProduct) {
-      setProducts(
-        products.map((p) => (p._id === selectedProduct ? { ...p, quantity: p.quantity + productQuantity } : p)),
-      )
+    if (product.stock < productQuantity) {
+      toast({
+        title: "Error",
+        description: `Insufficient stock. Available: ${product.stock}`,
+        variant: "destructive",
+      })
+      return
+    }
+
+    const existingItemIndex = invoiceItems.findIndex((item) => item.productId === selectedProduct)
+
+    if (existingItemIndex >= 0) {
+      const updatedItems = [...invoiceItems]
+      updatedItems[existingItemIndex].quantity += productQuantity
+      updatedItems[existingItemIndex].total = updatedItems[existingItemIndex].quantity * product.price
+      setInvoiceItems(updatedItems)
     } else {
-      setProducts([...products, { ...product, quantity: productQuantity }])
+      const newItem: InvoiceItem = {
+        productId: product._id,
+        productName: product.name,
+        quantity: productQuantity,
+        price: product.price,
+        total: product.price * productQuantity,
+      }
+      setInvoiceItems([...invoiceItems, newItem])
     }
 
     setSelectedProduct("")
@@ -131,11 +156,20 @@ export default function CreateInvoiceForm() {
   }
 
   const removeProduct = (productId: string) => {
-    setProducts(products.filter((p) => p._id !== productId))
+    setInvoiceItems(invoiceItems.filter((item) => item.productId !== productId))
+  }
+
+  const calculateSubtotal = () => {
+    return invoiceItems.reduce((sum, item) => sum + item.total, 0)
+  }
+
+  const calculateTax = () => {
+    if (invoiceType === "non-gst") return 0
+    return calculateSubtotal() * 0.18 // 18% GST
   }
 
   const calculateTotal = () => {
-    return products.reduce((sum, product) => sum + product.price * product.quantity, 0)
+    return calculateSubtotal() + calculateTax()
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -150,7 +184,7 @@ export default function CreateInvoiceForm() {
       return
     }
 
-    if (products.length === 0) {
+    if (invoiceItems.length === 0) {
       toast({
         title: "Error",
         description: "Please add at least one product.",
@@ -162,23 +196,44 @@ export default function CreateInvoiceForm() {
     setLoading(true)
 
     try {
-      // Call db-setup again right before submitting
-      await fetch("/api/db-setup")
-
       const customer = customers.find((c) => c._id === selectedCustomer)
+      if (!customer) {
+        throw new Error("Selected customer not found")
+      }
+
+      const invoiceData = {
+        invoiceNumber: nextInvoiceNumber,
+        customer: {
+          id: customer._id,
+          name: customer.name,
+          email: customer.email,
+          phone: customer.phone,
+          address: customer.address || "",
+        },
+        items: invoiceItems.map((item) => ({
+          productId: item.productId,
+          productName: item.productName,
+          quantity: item.quantity,
+          price: item.price,
+          total: item.total,
+        })),
+        subtotal: calculateSubtotal(),
+        taxAmount: calculateTax(),
+        total: calculateTotal(),
+        invoiceType,
+        paymentMethod,
+        invoiceDate: invoiceDate.toISOString(),
+        dueDate: dueDate.toISOString(),
+        notes,
+        status: "pending",
+      }
 
       const response = await fetch("/api/invoices", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          customer,
-          products,
-          total: calculateTotal(),
-          status: invoiceStatus,
-          date: invoiceDate,
-        }),
+        body: JSON.stringify(invoiceData),
       })
 
       if (!response.ok) {
@@ -186,13 +241,14 @@ export default function CreateInvoiceForm() {
         throw new Error(errorData.error || "Failed to create invoice")
       }
 
-      const data = await response.json()
+      const result = await response.json()
 
       toast({
         title: "Success",
-        description: `Invoice ${data.invoiceNumber} created successfully! (ID: ${data.invoiceId.substring(0, 8)}...)`,
+        description: `Invoice ${result.invoiceNumber} created successfully!`,
       })
 
+      // Redirect to invoices page
       router.push("/invoices")
     } catch (error) {
       console.error("Error creating invoice:", error)
@@ -206,167 +262,256 @@ export default function CreateInvoiceForm() {
     }
   }
 
-  return (
-    <div className="container mx-auto py-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Create Invoice</h1>
-        <Button variant="outline" onClick={() => router.push("/invoices")}>
-          Cancel
-        </Button>
+  if (loadingData) {
+    return (
+      <div className="container mx-auto py-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+            <p className="mt-2 text-gray-600">Loading...</p>
+          </div>
+        </div>
       </div>
+    )
+  }
 
-      <form onSubmit={handleSubmit}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Invoice Details</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label>Your Next Invoice Number</Label>
-                <div className="p-2 bg-gray-100 rounded mt-1">
-                  {loadingInvoiceNumber ? (
-                    <span className="text-gray-500">Loading...</span>
-                  ) : nextInvoiceNumber ? (
-                    <>
-                      {nextInvoiceNumber}
-                      <p className="text-xs text-gray-500 mt-1">
-                        Invoice numbers are unique per user. Each invoice will also receive a globally unique ID.
-                      </p>
-                    </>
-                  ) : (
-                    <span className="text-gray-500">Will be generated automatically</span>
-                  )}
+  return (
+    <div className="max-w-4xl mx-auto p-6">
+      <Card className="border border-gray-200">
+        <CardHeader className="pb-6">
+          <CardTitle className="text-2xl font-semibold">Customer Information</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <form onSubmit={handleSubmit}>
+            {/* Invoice Number */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Invoice Number</Label>
+              <div className="p-3 bg-gray-50 rounded-md border">
+                <span className="text-sm">{nextInvoiceNumber || "Loading..."}</span>
+              </div>
+            </div>
+
+            {/* Invoice Type */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">Invoice Type</Label>
+              <RadioGroup value={invoiceType} onValueChange={setInvoiceType} className="flex gap-6">
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="gst" id="gst" />
+                  <Label htmlFor="gst" className="text-sm">
+                    GST Invoice
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="non-gst" id="non-gst" />
+                  <Label htmlFor="non-gst" className="text-sm">
+                    Non-GST Invoice
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            {/* Customer */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Customer</Label>
+              <Select value={selectedCustomer} onValueChange={setSelectedCustomer}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Loading customers..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {customers.map((customer) => (
+                    <SelectItem key={customer._id} value={customer._id}>
+                      {customer.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Payment Method */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Payment Method</Label>
+              <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Bank Transfer" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="bank-transfer">Bank Transfer</SelectItem>
+                  <SelectItem value="cash">Cash</SelectItem>
+                  <SelectItem value="cheque">Cheque</SelectItem>
+                  <SelectItem value="upi">UPI</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Dates */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Invoice Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !invoiceDate && "text-muted-foreground",
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {invoiceDate ? format(invoiceDate, "PPP") : "Pick a date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={invoiceDate}
+                      onSelect={(date) => date && setInvoiceDate(date)}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Due Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn("w-full justify-start text-left font-normal", !dueDate && "text-muted-foreground")}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dueDate ? format(dueDate, "PPP") : "Pick a date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={dueDate}
+                      onSelect={(date) => date && setDueDate(date)}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+
+            {/* Add Products Section */}
+            <div className="space-y-4 pt-4 border-t">
+              <h3 className="text-lg font-medium">Add Products</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Product</Label>
+                  <Select value={selectedProduct} onValueChange={setSelectedProduct}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a product" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {products.map((product) => (
+                        <SelectItem key={product._id} value={product._id}>
+                          {product.name} - ₹{product.price} (Stock: {product.stock})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Quantity</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={productQuantity}
+                    onChange={(e) => setProductQuantity(Number.parseInt(e.target.value) || 1)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">&nbsp;</Label>
+                  <Button type="button" onClick={addProduct} className="w-full">
+                    Add Product
+                  </Button>
                 </div>
               </div>
+            </div>
 
-              <div>
-                <Label htmlFor="customer">Customer</Label>
-                <Select value={selectedCustomer} onValueChange={setSelectedCustomer}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a customer" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {customers.map((customer) => (
-                      <SelectItem key={customer._id} value={customer._id}>
-                        {customer.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="status">Status</Label>
-                <Select value={invoiceStatus} onValueChange={setInvoiceStatus}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Pending">Pending</SelectItem>
-                    <SelectItem value="Paid">Paid</SelectItem>
-                    <SelectItem value="Overdue">Overdue</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="date">Invoice Date</Label>
-                <Input type="date" id="date" value={invoiceDate} onChange={(e) => setInvoiceDate(e.target.value)} />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Add Products</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="product">Product</Label>
-                <Select value={selectedProduct} onValueChange={setSelectedProduct}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a product" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableProducts.map((product) => (
-                      <SelectItem key={product._id} value={product._id}>
-                        {product.name} - ${product.price.toFixed(2)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="quantity">Quantity</Label>
-                <Input
-                  type="number"
-                  id="quantity"
-                  min="1"
-                  value={productQuantity}
-                  onChange={(e) => setProductQuantity(Number.parseInt(e.target.value))}
-                />
-              </div>
-
-              <Button type="button" onClick={addProduct} className="w-full">
-                Add Product
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Invoice Items</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {products.length === 0 ? (
-              <p className="text-center py-4 text-gray-500">No products added yet.</p>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Product</TableHead>
-                    <TableHead>Price</TableHead>
-                    <TableHead>Quantity</TableHead>
-                    <TableHead>Total</TableHead>
-                    <TableHead>Action</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {products.map((product) => (
-                    <TableRow key={product._id}>
-                      <TableCell>{product.name}</TableCell>
-                      <TableCell>${product.price.toFixed(2)}</TableCell>
-                      <TableCell>{product.quantity}</TableCell>
-                      <TableCell>${(product.price * product.quantity).toFixed(2)}</TableCell>
-                      <TableCell>
-                        <Button variant="destructive" size="sm" onClick={() => removeProduct(product._id)}>
-                          Remove
-                        </Button>
-                      </TableCell>
+            {/* Invoice Items Table */}
+            {invoiceItems.length > 0 && (
+              <div className="space-y-4 pt-4 border-t">
+                <h3 className="text-lg font-medium">Invoice Items</h3>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Product</TableHead>
+                      <TableHead>Quantity</TableHead>
+                      <TableHead>Price</TableHead>
+                      <TableHead>Total</TableHead>
+                      <TableHead>Action</TableHead>
                     </TableRow>
-                  ))}
-                  <TableRow>
-                    <TableCell colSpan={3} className="text-right font-bold">
-                      Total:
-                    </TableCell>
-                    <TableCell className="font-bold">${calculateTotal().toFixed(2)}</TableCell>
-                    <TableCell></TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {invoiceItems.map((item) => (
+                      <TableRow key={item.productId}>
+                        <TableCell>{item.productName}</TableCell>
+                        <TableCell>{item.quantity}</TableCell>
+                        <TableCell>₹{item.price.toFixed(2)}</TableCell>
+                        <TableCell>₹{item.total.toFixed(2)}</TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="sm" onClick={() => removeProduct(item.productId)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
 
-        <div className="flex justify-end">
-          <Button type="submit" disabled={loading}>
-            {loading ? "Creating..." : "Create Invoice"}
-          </Button>
-        </div>
-      </form>
+                {/* Totals */}
+                <div className="space-y-2 pt-4 border-t">
+                  <div className="flex justify-between">
+                    <span>Subtotal:</span>
+                    <span>₹{calculateSubtotal().toFixed(2)}</span>
+                  </div>
+                  {invoiceType === "gst" && (
+                    <div className="flex justify-between">
+                      <span>Tax (18%):</span>
+                      <span>₹{calculateTax().toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between font-bold text-lg">
+                    <span>Total:</span>
+                    <span>₹{calculateTotal().toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Notes */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Notes</Label>
+              <Textarea
+                placeholder="Enter any additional notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={3}
+              />
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-between pt-6">
+              <Button type="button" variant="outline" onClick={() => router.push("/invoices")}>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={loading || invoiceItems.length === 0}
+                className="bg-slate-900 hover:bg-slate-800"
+              >
+                {loading ? "Creating..." : "Next"}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   )
 }
