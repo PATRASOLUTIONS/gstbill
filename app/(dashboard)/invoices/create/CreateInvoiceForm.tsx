@@ -62,41 +62,66 @@ export default function CreateInvoiceForm() {
   const [error, setError] = useState<string | null>(null)
 
   const router = useRouter()
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
 
   useEffect(() => {
+    if (status === "loading") return // Still loading session
+
+    if (status === "unauthenticated") {
+      router.push("/login")
+      return
+    }
+
     if (session?.user?.id) {
       fetchInitialData()
     }
-  }, [session?.user?.id])
+  }, [session?.user?.id, status, router])
 
   const fetchInitialData = async () => {
     setLoadingData(true)
     setError(null)
 
     try {
-      console.log("Fetching initial data...")
+      console.log("Starting to fetch initial data...")
+
+      // Initialize with empty arrays to prevent filter errors
+      setCustomers([])
+      setProducts([])
 
       // Fetch customers
       try {
-        const customersRes = await fetch("/api/customers")
+        console.log("Fetching customers...")
+        const customersRes = await fetch("/api/customers", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        })
+
         console.log("Customers response status:", customersRes.status)
 
         if (customersRes.ok) {
           const customersData = await customersRes.json()
-          console.log("Customers data:", customersData)
+          console.log("Raw customers data:", customersData)
 
-          // Ensure we always set an array
+          // Ensure we always work with an array
+          let customersArray: Customer[] = []
+
           if (Array.isArray(customersData)) {
-            setCustomers(customersData)
-          } else if (customersData && Array.isArray(customersData.customers)) {
-            setCustomers(customersData.customers)
+            customersArray = customersData
+          } else if (customersData && typeof customersData === "object" && Array.isArray(customersData.customers)) {
+            customersArray = customersData.customers
+          } else if (customersData && typeof customersData === "object" && Array.isArray(customersData.data)) {
+            customersArray = customersData.data
           } else {
-            console.warn("Customers data is not an array:", customersData)
-            setCustomers([])
+            console.warn("Unexpected customers data format:", customersData)
+            customersArray = []
           }
+
+          console.log("Processed customers array:", customersArray.length, "items")
+          setCustomers(customersArray)
         } else {
-          console.error("Failed to fetch customers:", customersRes.statusText)
+          console.error("Failed to fetch customers:", customersRes.status, customersRes.statusText)
           setCustomers([])
         }
       } catch (error) {
@@ -106,24 +131,38 @@ export default function CreateInvoiceForm() {
 
       // Fetch products
       try {
-        const productsRes = await fetch("/api/products")
+        console.log("Fetching products...")
+        const productsRes = await fetch("/api/products", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        })
+
         console.log("Products response status:", productsRes.status)
 
         if (productsRes.ok) {
           const productsData = await productsRes.json()
-          console.log("Products data:", productsData)
+          console.log("Raw products data:", productsData)
 
-          // Ensure we always set an array
+          // Ensure we always work with an array
+          let productsArray: Product[] = []
+
           if (Array.isArray(productsData)) {
-            setProducts(productsData)
-          } else if (productsData && Array.isArray(productsData.products)) {
-            setProducts(productsData.products)
+            productsArray = productsData
+          } else if (productsData && typeof productsData === "object" && Array.isArray(productsData.products)) {
+            productsArray = productsData.products
+          } else if (productsData && typeof productsData === "object" && Array.isArray(productsData.data)) {
+            productsArray = productsData.data
           } else {
-            console.warn("Products data is not an array:", productsData)
-            setProducts([])
+            console.warn("Unexpected products data format:", productsData)
+            productsArray = []
           }
+
+          console.log("Processed products array:", productsArray.length, "items")
+          setProducts(productsArray)
         } else {
-          console.error("Failed to fetch products:", productsRes.statusText)
+          console.error("Failed to fetch products:", productsRes.status, productsRes.statusText)
           setProducts([])
         }
       } catch (error) {
@@ -133,21 +172,35 @@ export default function CreateInvoiceForm() {
 
       // Fetch next invoice number
       try {
-        const invoiceNumberRes = await fetch("/api/invoices/generate-number")
+        console.log("Fetching invoice number...")
+        const invoiceNumberRes = await fetch("/api/invoices/generate-number", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        })
+
         console.log("Invoice number response status:", invoiceNumberRes.status)
 
         if (invoiceNumberRes.ok) {
           const invoiceNumberData = await invoiceNumberRes.json()
           console.log("Invoice number data:", invoiceNumberData)
-          setNextInvoiceNumber(invoiceNumberData.invoiceNumber || `INV-${Date.now()}`)
+
+          const invoiceNumber =
+            invoiceNumberData.invoiceNumber || `INV-${new Date().getFullYear()}-${Date.now().toString().slice(-4)}`
+          setNextInvoiceNumber(invoiceNumber)
         } else {
-          console.error("Failed to fetch invoice number:", invoiceNumberRes.statusText)
-          setNextInvoiceNumber(`INV-${Date.now()}`)
+          console.error("Failed to fetch invoice number:", invoiceNumberRes.status, invoiceNumberRes.statusText)
+          const fallbackNumber = `INV-${new Date().getFullYear()}-${Date.now().toString().slice(-4)}`
+          setNextInvoiceNumber(fallbackNumber)
         }
       } catch (error) {
         console.error("Error fetching invoice number:", error)
-        setNextInvoiceNumber(`INV-${Date.now()}`)
+        const fallbackNumber = `INV-${new Date().getFullYear()}-${Date.now().toString().slice(-4)}`
+        setNextInvoiceNumber(fallbackNumber)
       }
+
+      console.log("Initial data fetch completed")
     } catch (error) {
       console.error("Error in fetchInitialData:", error)
       setError("Failed to load initial data. Please refresh the page.")
@@ -162,81 +215,110 @@ export default function CreateInvoiceForm() {
   }
 
   const addProduct = () => {
-    if (!selectedProduct || productQuantity <= 0) {
-      toast({
-        title: "Error",
-        description: "Please select a product and enter a valid quantity.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    // Ensure products is an array before filtering
-    if (!Array.isArray(products)) {
-      toast({
-        title: "Error",
-        description: "Products data is not available. Please refresh the page.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    const product = products.find((p) => p._id === selectedProduct)
-    if (!product) {
-      toast({
-        title: "Error",
-        description: "Selected product not found.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    if (product.stock < productQuantity) {
-      toast({
-        title: "Error",
-        description: `Insufficient stock. Available: ${product.stock}`,
-        variant: "destructive",
-      })
-      return
-    }
-
-    const existingItemIndex = invoiceItems.findIndex((item) => item.productId === selectedProduct)
-
-    if (existingItemIndex >= 0) {
-      const updatedItems = [...invoiceItems]
-      updatedItems[existingItemIndex].quantity += productQuantity
-      updatedItems[existingItemIndex].total = updatedItems[existingItemIndex].quantity * product.price
-      setInvoiceItems(updatedItems)
-    } else {
-      const newItem: InvoiceItem = {
-        productId: product._id,
-        productName: product.name,
-        quantity: productQuantity,
-        price: product.price,
-        total: product.price * productQuantity,
+    try {
+      if (!selectedProduct || productQuantity <= 0) {
+        toast({
+          title: "Error",
+          description: "Please select a product and enter a valid quantity.",
+          variant: "destructive",
+        })
+        return
       }
-      setInvoiceItems([...invoiceItems, newItem])
-    }
 
-    setSelectedProduct("")
-    setProductQuantity(1)
+      // Double-check that products is an array
+      if (!Array.isArray(products)) {
+        console.error("Products is not an array:", products)
+        toast({
+          title: "Error",
+          description: "Products data is not available. Please refresh the page.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      const product = products.find((p) => p && p._id === selectedProduct)
+      if (!product) {
+        toast({
+          title: "Error",
+          description: "Selected product not found.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      if (product.stock < productQuantity) {
+        toast({
+          title: "Error",
+          description: `Insufficient stock. Available: ${product.stock}`,
+          variant: "destructive",
+        })
+        return
+      }
+
+      const existingItemIndex = invoiceItems.findIndex((item) => item.productId === selectedProduct)
+
+      if (existingItemIndex >= 0) {
+        const updatedItems = [...invoiceItems]
+        updatedItems[existingItemIndex].quantity += productQuantity
+        updatedItems[existingItemIndex].total = updatedItems[existingItemIndex].quantity * product.price
+        setInvoiceItems(updatedItems)
+      } else {
+        const newItem: InvoiceItem = {
+          productId: product._id,
+          productName: product.name,
+          quantity: productQuantity,
+          price: product.price,
+          total: product.price * productQuantity,
+        }
+        setInvoiceItems([...invoiceItems, newItem])
+      }
+
+      setSelectedProduct("")
+      setProductQuantity(1)
+    } catch (error) {
+      console.error("Error adding product:", error)
+      toast({
+        title: "Error",
+        description: "Failed to add product. Please try again.",
+        variant: "destructive",
+      })
+    }
   }
 
   const removeProduct = (productId: string) => {
-    setInvoiceItems(invoiceItems.filter((item) => item.productId !== productId))
+    try {
+      setInvoiceItems(invoiceItems.filter((item) => item.productId !== productId))
+    } catch (error) {
+      console.error("Error removing product:", error)
+    }
   }
 
   const calculateSubtotal = () => {
-    return invoiceItems.reduce((sum, item) => sum + item.total, 0)
+    try {
+      return invoiceItems.reduce((sum, item) => sum + (item.total || 0), 0)
+    } catch (error) {
+      console.error("Error calculating subtotal:", error)
+      return 0
+    }
   }
 
   const calculateTax = () => {
-    if (invoiceType === "non-gst") return 0
-    return calculateSubtotal() * 0.18 // 18% GST
+    try {
+      if (invoiceType === "non-gst") return 0
+      return calculateSubtotal() * 0.18 // 18% GST
+    } catch (error) {
+      console.error("Error calculating tax:", error)
+      return 0
+    }
   }
 
   const calculateTotal = () => {
-    return calculateSubtotal() + calculateTax()
+    try {
+      return calculateSubtotal() + calculateTax()
+    } catch (error) {
+      console.error("Error calculating total:", error)
+      return 0
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -263,12 +345,12 @@ export default function CreateInvoiceForm() {
     setLoading(true)
 
     try {
-      // Ensure customers is an array before filtering
+      // Double-check that customers is an array
       if (!Array.isArray(customers)) {
         throw new Error("Customer data is not available")
       }
 
-      const customer = customers.find((c) => c._id === selectedCustomer)
+      const customer = customers.find((c) => c && c._id === selectedCustomer)
       if (!customer) {
         throw new Error("Selected customer not found")
       }
@@ -337,7 +419,7 @@ export default function CreateInvoiceForm() {
     }
   }
 
-  if (loadingData) {
+  if (status === "loading" || loadingData) {
     return (
       <div className="container mx-auto py-6">
         <div className="flex items-center justify-center h-64">
@@ -403,15 +485,21 @@ export default function CreateInvoiceForm() {
               <Label className="text-sm font-medium">Customer</Label>
               <Select value={selectedCustomer} onValueChange={setSelectedCustomer}>
                 <SelectTrigger>
-                  <SelectValue placeholder={customers.length > 0 ? "Select a customer" : "Loading customers..."} />
+                  <SelectValue
+                    placeholder={
+                      Array.isArray(customers) && customers.length > 0 ? "Select a customer" : "Loading customers..."
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {Array.isArray(customers) && customers.length > 0 ? (
-                    customers.map((customer) => (
-                      <SelectItem key={customer._id} value={customer._id}>
-                        {customer.name}
-                      </SelectItem>
-                    ))
+                    customers.map((customer) =>
+                      customer && customer._id ? (
+                        <SelectItem key={customer._id} value={customer._id}>
+                          {customer.name || "Unnamed Customer"}
+                        </SelectItem>
+                      ) : null,
+                    )
                   ) : (
                     <SelectItem value="no-customers" disabled>
                       No customers available
@@ -497,15 +585,21 @@ export default function CreateInvoiceForm() {
                   <Label className="text-sm font-medium">Product</Label>
                   <Select value={selectedProduct} onValueChange={setSelectedProduct}>
                     <SelectTrigger>
-                      <SelectValue placeholder={products.length > 0 ? "Select a product" : "Loading products..."} />
+                      <SelectValue
+                        placeholder={
+                          Array.isArray(products) && products.length > 0 ? "Select a product" : "Loading products..."
+                        }
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {Array.isArray(products) && products.length > 0 ? (
-                        products.map((product) => (
-                          <SelectItem key={product._id} value={product._id}>
-                            {product.name} - ₹{product.price} (Stock: {product.stock})
-                          </SelectItem>
-                        ))
+                        products.map((product) =>
+                          product && product._id ? (
+                            <SelectItem key={product._id} value={product._id}>
+                              {product.name || "Unnamed Product"} - ₹{product.price || 0} (Stock: {product.stock || 0})
+                            </SelectItem>
+                          ) : null,
+                        )
                       ) : (
                         <SelectItem value="no-products" disabled>
                           No products available

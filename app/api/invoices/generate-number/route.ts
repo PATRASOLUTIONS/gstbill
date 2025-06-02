@@ -19,20 +19,25 @@ export async function GET(request: NextRequest) {
 
     let nextNumber = 1
     if (latestInvoice && latestInvoice.invoiceNumber) {
-      // Extract number from invoice number (e.g., "INV-2025-1036" -> 1036)
-      const match = latestInvoice.invoiceNumber.match(/(\d+)$/)
+      // Extract number from invoice number (e.g., "INV-2025-0001" -> 1)
+      const match = latestInvoice.invoiceNumber.match(/INV-\d{4}-(\d+)/)
       if (match) {
         nextNumber = Number.parseInt(match[1]) + 1
       }
     }
 
-    // Generate invoice number in format INV-YYYY-NNNN
-    const year = new Date().getFullYear()
-    const invoiceNumber = `INV-${year}-${nextNumber.toString().padStart(4, "0")}`
+    const currentYear = new Date().getFullYear()
+    const invoiceNumber = `INV-${currentYear}-${nextNumber.toString().padStart(4, "0")}`
+
+    console.log("Generated invoice number:", invoiceNumber)
 
     return NextResponse.json({ invoiceNumber })
   } catch (error) {
     console.error("Error generating invoice number:", error)
-    return NextResponse.json({ error: "Failed to generate invoice number" }, { status: 500 })
+
+    // Fallback to timestamp-based number
+    const fallbackNumber = `INV-${new Date().getFullYear()}-${Date.now().toString().slice(-4)}`
+
+    return NextResponse.json({ invoiceNumber: fallbackNumber })
   }
 }
