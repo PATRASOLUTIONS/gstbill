@@ -1,0 +1,49 @@
+import { getServerSession } from "next-auth/next"
+import { NextResponse } from "next/server"
+import { authOptions } from "@/lib/auth"
+import { connectToDatabase } from "@/lib/mongodb"
+
+export async function GET() {
+  try {
+    const session = await getServerSession(authOptions)
+
+    if (!session || !session.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const { db } = await connectToDatabase()
+    const user = await db
+      .collection("users")
+      .findOne({ email: session.user.email }, { projection: { role: 1, permissions: 1 } })
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 })
+    }
+
+    // Default permissions based on role
+    let permissions = {
+      dashboard: true,
+      products: true,
+      categories: true,
+      customers: true,
+      sales: true,
+      purchases: true,
+      suppliers: true,
+      invoices: true,
+      refunds: true,
+      reports: true,
+      admin: user.role === "admin",
+    }
+
+    // Override with user-specific permissions if they exist
+    if (user.permissions) {
+      permissions = { ...permissions, ...user.permissions }
+    }
+
+    return NextResponse.json({ permissions })
+  } catch (error) {
+    console.error("Error fetching user permissions:", error)
+    return NextResponse.json({ error: "Failed to fetch user permissions" }, { status: 500 })
+  }
+}
+
