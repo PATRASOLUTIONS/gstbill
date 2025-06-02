@@ -31,7 +31,8 @@ interface Customer {
   _id: string
   name: string
   email: string
-  phone: string
+  phone?: string
+  contact?: string
   address?: string
 }
 
@@ -58,42 +59,98 @@ export default function CreateInvoiceForm() {
   const [loading, setLoading] = useState(false)
   const [nextInvoiceNumber, setNextInvoiceNumber] = useState("")
   const [loadingData, setLoadingData] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const router = useRouter()
   const { data: session } = useSession()
 
   useEffect(() => {
-    fetchInitialData()
+    if (session?.user?.id) {
+      fetchInitialData()
+    }
   }, [session?.user?.id])
 
   const fetchInitialData = async () => {
-    if (!session?.user?.id) return
-
     setLoadingData(true)
+    setError(null)
+
     try {
-      // Fetch customers, products, and next invoice number in parallel
-      const [customersRes, productsRes, invoiceNumberRes] = await Promise.all([
-        fetch("/api/customers"),
-        fetch("/api/products"),
-        fetch("/api/invoices/generate-number"),
-      ])
+      console.log("Fetching initial data...")
 
-      if (customersRes.ok) {
-        const customersData = await customersRes.json()
-        setCustomers(Array.isArray(customersData) ? customersData : [])
+      // Fetch customers
+      try {
+        const customersRes = await fetch("/api/customers")
+        console.log("Customers response status:", customersRes.status)
+
+        if (customersRes.ok) {
+          const customersData = await customersRes.json()
+          console.log("Customers data:", customersData)
+
+          // Ensure we always set an array
+          if (Array.isArray(customersData)) {
+            setCustomers(customersData)
+          } else if (customersData && Array.isArray(customersData.customers)) {
+            setCustomers(customersData.customers)
+          } else {
+            console.warn("Customers data is not an array:", customersData)
+            setCustomers([])
+          }
+        } else {
+          console.error("Failed to fetch customers:", customersRes.statusText)
+          setCustomers([])
+        }
+      } catch (error) {
+        console.error("Error fetching customers:", error)
+        setCustomers([])
       }
 
-      if (productsRes.ok) {
-        const productsData = await productsRes.json()
-        setProducts(Array.isArray(productsData) ? productsData : [])
+      // Fetch products
+      try {
+        const productsRes = await fetch("/api/products")
+        console.log("Products response status:", productsRes.status)
+
+        if (productsRes.ok) {
+          const productsData = await productsRes.json()
+          console.log("Products data:", productsData)
+
+          // Ensure we always set an array
+          if (Array.isArray(productsData)) {
+            setProducts(productsData)
+          } else if (productsData && Array.isArray(productsData.products)) {
+            setProducts(productsData.products)
+          } else {
+            console.warn("Products data is not an array:", productsData)
+            setProducts([])
+          }
+        } else {
+          console.error("Failed to fetch products:", productsRes.statusText)
+          setProducts([])
+        }
+      } catch (error) {
+        console.error("Error fetching products:", error)
+        setProducts([])
       }
 
-      if (invoiceNumberRes.ok) {
-        const invoiceNumberData = await invoiceNumberRes.json()
-        setNextInvoiceNumber(invoiceNumberData.invoiceNumber || "")
+      // Fetch next invoice number
+      try {
+        const invoiceNumberRes = await fetch("/api/invoices/generate-number")
+        console.log("Invoice number response status:", invoiceNumberRes.status)
+
+        if (invoiceNumberRes.ok) {
+          const invoiceNumberData = await invoiceNumberRes.json()
+          console.log("Invoice number data:", invoiceNumberData)
+          setNextInvoiceNumber(invoiceNumberData.invoiceNumber || `INV-${Date.now()}`)
+        } else {
+          console.error("Failed to fetch invoice number:", invoiceNumberRes.statusText)
+          setNextInvoiceNumber(`INV-${Date.now()}`)
+        }
+      } catch (error) {
+        console.error("Error fetching invoice number:", error)
+        setNextInvoiceNumber(`INV-${Date.now()}`)
       }
     } catch (error) {
-      console.error("Error fetching initial data:", error)
+      console.error("Error in fetchInitialData:", error)
+      setError("Failed to load initial data. Please refresh the page.")
       toast({
         title: "Error",
         description: "Failed to load initial data. Please refresh the page.",
@@ -109,6 +166,16 @@ export default function CreateInvoiceForm() {
       toast({
         title: "Error",
         description: "Please select a product and enter a valid quantity.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Ensure products is an array before filtering
+    if (!Array.isArray(products)) {
+      toast({
+        title: "Error",
+        description: "Products data is not available. Please refresh the page.",
         variant: "destructive",
       })
       return
@@ -196,6 +263,11 @@ export default function CreateInvoiceForm() {
     setLoading(true)
 
     try {
+      // Ensure customers is an array before filtering
+      if (!Array.isArray(customers)) {
+        throw new Error("Customer data is not available")
+      }
+
       const customer = customers.find((c) => c._id === selectedCustomer)
       if (!customer) {
         throw new Error("Selected customer not found")
@@ -207,7 +279,7 @@ export default function CreateInvoiceForm() {
           id: customer._id,
           name: customer.name,
           email: customer.email,
-          phone: customer.phone,
+          phone: customer.phone || customer.contact || "",
           address: customer.address || "",
         },
         items: invoiceItems.map((item) => ({
@@ -228,6 +300,8 @@ export default function CreateInvoiceForm() {
         status: "pending",
       }
 
+      console.log("Submitting invoice data:", invoiceData)
+
       const response = await fetch("/api/invoices", {
         method: "POST",
         headers: {
@@ -242,6 +316,7 @@ export default function CreateInvoiceForm() {
       }
 
       const result = await response.json()
+      console.log("Invoice created successfully:", result)
 
       toast({
         title: "Success",
@@ -269,6 +344,19 @@ export default function CreateInvoiceForm() {
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
             <p className="mt-2 text-gray-600">Loading...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto py-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <p className="text-red-600 mb-4">{error}</p>
+            <Button onClick={fetchInitialData}>Try Again</Button>
           </div>
         </div>
       </div>
@@ -315,14 +403,20 @@ export default function CreateInvoiceForm() {
               <Label className="text-sm font-medium">Customer</Label>
               <Select value={selectedCustomer} onValueChange={setSelectedCustomer}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Loading customers..." />
+                  <SelectValue placeholder={customers.length > 0 ? "Select a customer" : "Loading customers..."} />
                 </SelectTrigger>
                 <SelectContent>
-                  {customers.map((customer) => (
-                    <SelectItem key={customer._id} value={customer._id}>
-                      {customer.name}
+                  {Array.isArray(customers) && customers.length > 0 ? (
+                    customers.map((customer) => (
+                      <SelectItem key={customer._id} value={customer._id}>
+                        {customer.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="no-customers" disabled>
+                      No customers available
                     </SelectItem>
-                  ))}
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -403,14 +497,20 @@ export default function CreateInvoiceForm() {
                   <Label className="text-sm font-medium">Product</Label>
                   <Select value={selectedProduct} onValueChange={setSelectedProduct}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a product" />
+                      <SelectValue placeholder={products.length > 0 ? "Select a product" : "Loading products..."} />
                     </SelectTrigger>
                     <SelectContent>
-                      {products.map((product) => (
-                        <SelectItem key={product._id} value={product._id}>
-                          {product.name} - ₹{product.price} (Stock: {product.stock})
+                      {Array.isArray(products) && products.length > 0 ? (
+                        products.map((product) => (
+                          <SelectItem key={product._id} value={product._id}>
+                            {product.name} - ₹{product.price} (Stock: {product.stock})
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="no-products" disabled>
+                          No products available
                         </SelectItem>
-                      ))}
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
