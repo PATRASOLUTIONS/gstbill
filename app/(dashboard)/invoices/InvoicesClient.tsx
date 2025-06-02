@@ -1,138 +1,139 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import { useRouter } from "next/navigation"
-import { formatCurrency } from "@/lib/utils"
+import { createInvoice, deleteInvoice, updateInvoice } from "@/app/lib/actions"
+import { Button } from "@/app/ui/button"
+import { PlusIcon } from "@heroicons/react/24/outline"
+import { Search } from "@/app/ui/search"
+import { InvoicesTable } from "@/app/ui/invoices/table"
+import { CreateInvoice } from "@/app/ui/invoices/create-form"
+import { UpdateInvoice } from "@/app/ui/invoices/edit-form"
+import { useOptimistic, useState, useTransition } from "react"
+import { usePathname, useSearchParams } from "next/navigation"
 
-interface Product {
-  _id: string
-  name: string
-  quantity: number
-  price: number
-}
+export default function InvoicesClient({
+  invoices,
+  customers,
+  totalPages,
+}: {
+  invoices: any[]
+  customers: any[]
+  totalPages: number
+}) {
+  const [isCreating, setIsCreating] = useState(false)
+  const [invoiceToUpdate, setInvoiceToUpdate] = useState(null)
 
-interface Customer {
-  _id: string
-  name: string
-  email: string
-  phone: string
-}
+  const searchParams = useSearchParams()
+  const query = searchParams.get("query") || ""
+  const currentPage = Number(searchParams.get("page")) || 1
+  const pathname = usePathname()
+  const [isPending, startTransition] = useTransition()
 
-interface Invoice {
-  _id: string
-  invoiceNumber: string
-  customer: Customer
-  products: Product[]
-  total: number
-  status: string
-  date: string
-  userId: string
-}
+  const [optimisticInvoices, setOptimisticInvoices] = useOptimistic(invoices, (state, newInvoice) => [
+    newInvoice,
+    ...state,
+  ])
 
-export default function InvoicesClient() {
-  const [invoices, setInvoices] = useState<Invoice[]>([])
-  const [loading, setLoading] = useState(true)
-  const router = useRouter()
-
-  useEffect(() => {
-    async function fetchInvoices() {
-      try {
-        const response = await fetch("/api/invoices")
-        if (!response.ok) {
-          throw new Error("Failed to fetch invoices")
-        }
-        const data = await response.json()
-        setInvoices(Array.isArray(data) ? data : [])
-      } catch (error) {
-        console.error("Error fetching invoices:", error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchInvoices()
-  }, [])
-
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "paid":
-        return "bg-green-100 text-green-800"
-      case "pending":
-        return "bg-yellow-100 text-yellow-800"
-      case "overdue":
-        return "bg-red-100 text-red-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
+  const handleCreateFormToggle = () => {
+    setIsCreating((prevState) => !prevState)
   }
 
-  // Force database setup on component mount (keeping this functionality)
-  useEffect(() => {
-    async function setupDatabase() {
-      try {
-        await fetch("/api/db-setup")
-      } catch (error) {
-        console.error("Error setting up database:", error)
-      }
-    }
+  const handleUpdateFormToggle = (invoice: any) => {
+    setInvoiceToUpdate(invoice)
+  }
 
-    setupDatabase()
-  }, [])
+  const handleUpdateFormClose = () => {
+    setInvoiceToUpdate(null)
+  }
+
+  async function handleCreateInvoice(formData: FormData) {
+    startTransition(async () => {
+      try {
+        const rawFormData = {
+          customerId: formData.get("customerId"),
+          amount: formData.get("amount"),
+          status: formData.get("status"),
+        }
+
+        const { id } = await createInvoice(rawFormData)
+
+        // Revalidate the cache
+        // revalidatePath('/dashboard/invoices');
+        setOptimisticInvoices((prevState) => [
+          {
+            id: id,
+            customer_id: rawFormData.customerId,
+            amount: Number.parseInt(rawFormData.amount as string),
+            status: rawFormData.status,
+            date: new Date().toISOString().split("T")[0],
+          },
+          ...prevState,
+        ])
+        setIsCreating(false)
+      } catch (error) {
+        console.error("Error creating invoice:", error)
+      }
+    })
+  }
+
+  async function handleUpdateInvoice(id: string, formData: FormData) {
+    startTransition(async () => {
+      try {
+        const rawFormData = {
+          customerId: formData.get("customerId"),
+          amount: formData.get("amount"),
+          status: formData.get("status"),
+        }
+
+        await updateInvoice(id, rawFormData)
+        handleUpdateFormClose()
+      } catch (error) {
+        console.error("Error updating invoice:", error)
+      }
+    })
+  }
+
+  async function handleDeleteInvoice(id: string) {
+    startTransition(async () => {
+      try {
+        await deleteInvoice(id)
+      } catch (error) {
+        console.error("Error deleting invoice:", error)
+      }
+    })
+  }
 
   return (
-    <div className="container mx-auto py-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Invoices</h1>
-        <Button onClick={() => router.push("/invoices/create")}>Create Invoice</Button>
+    <div>
+      <div className="mt-4 flex items-center justify-between gap-2 md:mt-8">
+        <Search placeholder="Search invoices..." />
+        <div>
+          <Button onClick={handleCreateFormToggle}>
+            <PlusIcon className="h-5 w-5" />
+            Create Invoice
+          </Button>
+        </div>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>All Invoices</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <p>Loading invoices...</p>
-          ) : invoices.length === 0 ? (
-            <p>No invoices found. Create your first invoice!</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Invoice #</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {invoices.map((invoice) => (
-                  <TableRow key={invoice._id}>
-                    <TableCell>{invoice.invoiceNumber}</TableCell>
-                    <TableCell>{invoice.customer?.name || "N/A"}</TableCell>
-                    <TableCell>{new Date(invoice.date).toLocaleDateString()}</TableCell>
-                    <TableCell>{formatCurrency(invoice.total)}</TableCell>
-                    <TableCell>
-                      <Badge className={getStatusColor(invoice.status)}>{invoice.status}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="outline" size="sm" onClick={() => router.push(`/invoices/${invoice._id}`)}>
-                        View
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+      {isCreating && (
+        <CreateInvoice customers={customers} onCreate={handleCreateInvoice} onClose={handleCreateFormToggle} />
+      )}
+      {invoiceToUpdate && (
+        <UpdateInvoice
+          id={invoiceToUpdate.id}
+          customerId={invoiceToUpdate.customer_id}
+          amount={invoiceToUpdate.amount}
+          status={invoiceToUpdate.status}
+          customers={customers}
+          onUpdate={handleUpdateInvoice}
+          onClose={handleUpdateFormClose}
+        />
+      )}
+      <InvoicesTable
+        invoices={optimisticInvoices}
+        search={query}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        deleteInvoice={handleDeleteInvoice}
+      />
     </div>
   )
 }

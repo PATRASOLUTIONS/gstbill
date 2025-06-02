@@ -12,6 +12,7 @@
     "@auth/core": "latest",
     "@auth/prisma-adapter": "latest",
     "@aws-sdk/credential-providers": "latest",
+    "@heroicons/react": "latest",
     "@hookform/resolvers": "latest",
     "@mongodb-js/zstd": "latest",
     "@next-auth/mongodb-adapter": "latest",
