@@ -47,4 +47,3 @@ const CompanySchema = new Schema(
 )
 
 export default mongoose.models.Company || mongoose.model<CompanyDocument>("Company", CompanySchema)
-

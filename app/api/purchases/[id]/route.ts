@@ -115,4 +115,3 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     return new NextResponse(JSON.stringify({ error: "Failed to delete purchase" }), { status: 500 })
   }
 }
-

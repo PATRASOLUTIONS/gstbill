@@ -61,4 +61,3 @@ const refundSupplierSchema = new Schema<IRefundSupplier>(
 const RefundSupplier = models.RefundSupplier || model<IRefundSupplier>("RefundSupplier", refundSupplierSchema)
 
 export default RefundSupplier
-

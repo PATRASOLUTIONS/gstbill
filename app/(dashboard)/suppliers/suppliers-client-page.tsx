@@ -788,4 +788,3 @@ export default function SuppliersClientPage() {
     </div>
   )
 }
-

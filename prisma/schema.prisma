@@ -216,4 +216,3 @@ model RefundItem {
   refund      Refund   @relation(fields: [refundId], references: [id], onDelete: Cascade)
   product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
-

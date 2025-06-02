@@ -396,4 +396,3 @@ export async function generateInvoicePdf(invoiceData: any): Promise<jsPDF> {
 
 // Export with the correct capitalization that's expected by the system
 export const generateInvoicePDF = generateInvoicePdf
-

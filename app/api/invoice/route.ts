@@ -339,4 +339,3 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ message: "An error occurred while deleting the invoice" }, { status: 500 })
   }
 }
-

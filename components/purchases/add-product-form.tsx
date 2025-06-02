@@ -294,4 +294,3 @@ export function AddProductForm({
     </div>
   )
 }
-

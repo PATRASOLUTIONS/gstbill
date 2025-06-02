@@ -601,4 +601,3 @@ export const bankSeedData = [
 
 // Run the seed function
 seedDatabase()
-

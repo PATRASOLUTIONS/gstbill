@@ -85,4 +85,3 @@ export function DeleteInvoiceDialog({ open, onOpenChange, invoice, onDeleted }: 
     </AlertDialog>
   )
 }
-

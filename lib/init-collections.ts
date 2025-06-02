@@ -38,4 +38,3 @@ export async function initializeCollections() {
     console.error("Error initializing collections:", error)
   }
 }
-

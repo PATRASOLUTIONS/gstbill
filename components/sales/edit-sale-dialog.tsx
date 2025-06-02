@@ -705,4 +705,3 @@ export function EditSaleDialog({ open, onOpenChange, saleId, onSaleUpdated }: Ed
     </Dialog>
   )
 }
-

@@ -333,4 +333,3 @@ export function PurchaseDataTable({ status = "all" }: { status?: string }) {
     </div>
   )
 }
-

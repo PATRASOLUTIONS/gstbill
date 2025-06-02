@@ -155,4 +155,3 @@ const stylesPastel = StyleSheet.create({
 })
 
 export default stylesPastel
-

@@ -86,4 +86,3 @@ const purchaseSchema = new Schema<IPurchase>(
 const Purchase = models.Purchase || model<IPurchase>("Purchase", purchaseSchema)
 
 export default Purchase
-

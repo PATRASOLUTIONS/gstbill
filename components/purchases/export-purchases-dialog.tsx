@@ -75,4 +75,3 @@ export function ExportPurchasesDialog({ open, onOpenChange }: ExportPurchasesDia
     </Dialog>
   )
 }
-

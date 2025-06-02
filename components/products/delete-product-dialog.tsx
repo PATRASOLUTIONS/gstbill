@@ -72,4 +72,3 @@ export function DeleteProductDialog({ product, open, onOpenChange, onDelete }: D
     </Dialog>
   )
 }
-

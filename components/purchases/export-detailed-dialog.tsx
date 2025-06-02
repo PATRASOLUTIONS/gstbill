@@ -241,4 +241,3 @@ export function ExportDetailedDialog({ open, onOpenChange, purchases }: ExportDe
     </Dialog>
   )
 }
-

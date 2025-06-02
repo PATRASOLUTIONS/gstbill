@@ -22,4 +22,3 @@ export function useAuthCheck(redirectTo = "/auth/login") {
     isAuthenticated: status === "authenticated",
   }
 }
-

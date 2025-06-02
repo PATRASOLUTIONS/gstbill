@@ -196,4 +196,3 @@ export function EditSupplierDialog({ supplier, open, onOpenChange, onSupplierUpd
     </Dialog>
   )
 }
-

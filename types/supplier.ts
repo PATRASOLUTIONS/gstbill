@@ -10,4 +10,3 @@ export interface Supplier {
   createdAt: string
   updatedAt: string
 }
-

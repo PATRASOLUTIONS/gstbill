@@ -264,4 +264,3 @@ export function SalesDataTable({ activeTab = "all" }: SalesDataTableProps) {
     </div>
   )
 }
-

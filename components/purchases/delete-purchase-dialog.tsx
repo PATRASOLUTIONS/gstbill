@@ -75,4 +75,3 @@ export function DeletePurchaseDialog({ open, onOpenChange, purchaseId, onDeleted
     </AlertDialog>
   )
 }
-

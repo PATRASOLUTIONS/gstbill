@@ -179,4 +179,3 @@ export function SuppliersTable({ suppliers, onSupplierUpdated }: SuppliersTableP
     </>
   )
 }
-

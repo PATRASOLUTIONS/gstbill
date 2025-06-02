@@ -380,4 +380,3 @@ export function SystemSettings({}: SystemSettingsProps) {
     </div>
   )
 }
-

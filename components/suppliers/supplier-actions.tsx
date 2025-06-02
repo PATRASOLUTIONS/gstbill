@@ -92,4 +92,3 @@ export function SupplierActions({ supplier, onDelete }: SupplierActionsProps) {
     </>
   )
 }
-

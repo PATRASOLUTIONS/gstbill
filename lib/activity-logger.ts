@@ -61,4 +61,3 @@ export class ActivityLogger {
 }
 
 export const logActivity = ActivityLogger.log
-

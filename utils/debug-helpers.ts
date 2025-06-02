@@ -62,4 +62,3 @@ export function logDetailedError(error: any, context = ""): void {
     }
   }
 }
-

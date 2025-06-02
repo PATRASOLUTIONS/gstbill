@@ -624,4 +624,3 @@ export async function generateInvoicePDF(sale: any): Promise<Buffer> {
     throw error
   }
 }
-

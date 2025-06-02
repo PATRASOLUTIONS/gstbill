@@ -35,4 +35,3 @@ exec("npx ts-node -r tsconfig-paths/register scripts/seed-data.ts", (error, stdo
   }
   console.log(stdout)
 })
-

@@ -220,4 +220,3 @@ export default dbService
 export async function connectToDatabase() {
   return dbService.connect()
 }
-

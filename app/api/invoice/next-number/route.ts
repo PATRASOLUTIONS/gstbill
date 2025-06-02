@@ -74,4 +74,3 @@ export async function GET(req: Request) {
     return NextResponse.json({ message: "An error occurred while generating the next invoice number" }, { status: 500 })
   }
 }
-

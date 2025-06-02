@@ -21,4 +21,3 @@ export function PageHeader({ heading, subheading, children, className }: PageHea
     </div>
   )
 }
-

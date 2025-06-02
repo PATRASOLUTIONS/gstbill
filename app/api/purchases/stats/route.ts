@@ -62,4 +62,3 @@ export async function GET(req: NextRequest) {
     return new NextResponse(JSON.stringify({ error: "Failed to fetch purchase statistics" }), { status: 500 })
   }
 }
-

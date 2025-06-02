@@ -67,4 +67,3 @@ export function ViewProductDetailsDialog({ product, open, onOpenChange }: ViewPr
     </Dialog>
   )
 }
-

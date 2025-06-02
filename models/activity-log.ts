@@ -41,4 +41,3 @@ const activityLogSchema = new Schema<IActivityLog>({
 const ActivityLog = mongoose.models.ActivityLog || mongoose.model<IActivityLog>("ActivityLog", activityLogSchema)
 
 export default ActivityLog
-

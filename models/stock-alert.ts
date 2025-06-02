@@ -39,4 +39,3 @@ const stockAlertSchema = new Schema<IStockAlert>(
 const StockAlert = models.StockAlert || model<IStockAlert>("StockAlert", stockAlertSchema)
 
 export default StockAlert
-

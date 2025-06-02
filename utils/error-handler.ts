@@ -119,4 +119,3 @@ export function handleSaleCancellationError(error: any): ErrorInfo {
   // For non-Error objects or unknown errors
   return defaultError
 }
-

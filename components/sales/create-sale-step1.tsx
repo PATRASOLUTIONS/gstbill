@@ -122,4 +122,3 @@ export function CreateSaleStep1({ onSubmit, initialCustomerId = "", initialCusto
     </form>
   )
 }
-

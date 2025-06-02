@@ -47,4 +47,3 @@ export async function GET() {
     return NextResponse.json({ error: "Failed to create test user" }, { status: 500 })
   }
 }
-

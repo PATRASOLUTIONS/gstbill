@@ -95,4 +95,3 @@ export default function PDFDownloadButton({ invoiceId }: PDFDownloadButtonProps)
     </Button>
   )
 }
-

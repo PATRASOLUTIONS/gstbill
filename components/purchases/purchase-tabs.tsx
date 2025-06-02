@@ -377,4 +377,3 @@ export function PurchaseTabs({
     </Tabs>
   )
 }
-

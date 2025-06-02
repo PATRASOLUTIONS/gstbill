@@ -469,4 +469,3 @@ export function UserManagementTable({ users, onUserUpdated }: UserManagementTabl
     </>
   )
 }
-

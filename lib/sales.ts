@@ -179,4 +179,3 @@ export async function getNextInvoiceNumber() {
     return "INV-0001"
   }
 }
-

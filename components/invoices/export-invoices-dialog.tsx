@@ -132,4 +132,3 @@ export function ExportInvoicesDialog({ open, onOpenChange }: ExportInvoicesDialo
     </Dialog>
   )
 }
-

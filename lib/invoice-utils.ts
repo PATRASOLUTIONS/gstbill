@@ -17,4 +17,3 @@ export async function getNextInvoiceNumber(userId: string, db: Db): Promise<stri
   const sequence = result.sequence || 1
   return `INV-${currentYear}-${sequence.toString().padStart(4, "0")}`
 }
-

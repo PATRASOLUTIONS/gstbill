@@ -23,4 +23,3 @@ export function formatDateForCSV(date: Date | string | number): string {
     return ""
   }
 }
-

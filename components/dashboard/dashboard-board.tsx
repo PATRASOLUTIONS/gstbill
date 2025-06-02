@@ -345,4 +345,3 @@ export function DashboardBoard() {
     </div>
   )
 }
-

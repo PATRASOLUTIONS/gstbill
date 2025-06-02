@@ -203,4 +203,3 @@ export function ViewDetailsDialog({ open, onOpenChange, purchase }: ViewDetailsD
     </Dialog>
   )
 }
-

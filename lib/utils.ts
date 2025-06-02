@@ -65,4 +65,3 @@ export function generateOrderNumber(): string {
     .padStart(3, "0")
   return `${prefix}-${timestamp}-${random}`
 }
-

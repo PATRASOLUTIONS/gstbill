@@ -148,4 +148,3 @@ export function FormMonthPicker({ name, label, placeholder, description, disable
     />
   )
 }
-

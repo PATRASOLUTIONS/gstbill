@@ -155,4 +155,3 @@ export function ExportSalesDialog({ open, onOpenChange }: ExportSalesDialogProps
     </Dialog>
   )
 }
-

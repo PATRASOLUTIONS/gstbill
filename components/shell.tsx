@@ -10,4 +10,3 @@ export function DashboardShell({ children, className, ...props }: DashboardShell
     </div>
   )
 }
-

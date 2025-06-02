@@ -365,4 +365,3 @@ export function UserSidebarPermissionsTable({ users, onPermissionsUpdated }: Use
     </>
   )
 }
-

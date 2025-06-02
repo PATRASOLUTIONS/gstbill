@@ -121,4 +121,3 @@ export async function PUT(req: Request) {
   // Redirect to POST for simplicity
   return POST(req)
 }
-

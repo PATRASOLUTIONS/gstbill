@@ -42,4 +42,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Failed to generate invoice number" }, { status: 500 })
   }
 }
-

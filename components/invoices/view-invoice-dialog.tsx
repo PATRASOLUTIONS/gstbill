@@ -198,4 +198,3 @@ export function ViewInvoiceDialog({ open, onOpenChange, invoice }: ViewInvoiceDi
     </Dialog>
   )
 }
-

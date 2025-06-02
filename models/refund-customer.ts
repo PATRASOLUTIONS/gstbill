@@ -61,4 +61,3 @@ const refundCustomerSchema = new Schema<IRefundCustomer>(
 const RefundCustomer = models.RefundCustomer || model<IRefundCustomer>("RefundCustomer", refundCustomerSchema)
 
 export default RefundCustomer
-

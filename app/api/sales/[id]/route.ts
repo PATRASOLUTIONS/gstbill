@@ -92,4 +92,3 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     return NextResponse.json({ message: "Failed to fetch sale details" }, { status: 500 })
   }
 }
-

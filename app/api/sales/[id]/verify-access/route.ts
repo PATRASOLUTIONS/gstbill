@@ -39,4 +39,3 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     return NextResponse.json({ message: "Failed to verify access" }, { status: 500 })
   }
 }
-

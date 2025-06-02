@@ -429,4 +429,3 @@ export function ViewDetailsDialog({ open, onOpenChange, invoiceId, onDownload, o
     </Dialog>
   )
 }
-

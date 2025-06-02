@@ -443,4 +443,3 @@ export function PurchaseList({
     </Card>
   )
 }
-

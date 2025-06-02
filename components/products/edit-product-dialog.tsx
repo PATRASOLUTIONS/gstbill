@@ -275,4 +275,3 @@ export function EditProductDialog({ product }: { product: Product }) {
     </>
   )
 }
-

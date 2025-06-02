@@ -26,4 +26,3 @@ export async function getNextSalesNumber(userId: string): Promise<string> {
 export function generateSalesId(): string {
   return new ObjectId().toString()
 }
-

@@ -357,4 +357,3 @@ export function ProductsTable({ products }: ProductsTableProps) {
     </div>
   )
 }
-

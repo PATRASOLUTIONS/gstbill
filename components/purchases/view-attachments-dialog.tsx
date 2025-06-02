@@ -81,4 +81,3 @@ export function ViewAttachmentsDialog({ open, onOpenChange, purchase }: ViewAtta
     </Dialog>
   )
 }
-

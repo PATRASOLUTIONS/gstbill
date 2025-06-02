@@ -88,4 +88,3 @@ export function ViewDetailsDialog({ customer, open, onOpenChange }: ViewDetailsD
     </Dialog>
   )
 }
-

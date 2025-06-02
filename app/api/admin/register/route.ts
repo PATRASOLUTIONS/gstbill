@@ -74,4 +74,3 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "An error occurred during user creation" }, { status: 500 })
   }
 }
-

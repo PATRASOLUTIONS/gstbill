@@ -68,4 +68,3 @@ function getItemStatus(quantity: number, reorderLevel: number): string {
   if (quantity <= reorderLevel) return "Low Stock"
   return "In Stock"
 }
-

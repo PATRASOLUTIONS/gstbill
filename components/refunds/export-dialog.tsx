@@ -259,4 +259,3 @@ export function ExportRefundsDialog({ open, onOpenChange }) {
     </Dialog>
   )
 }
-

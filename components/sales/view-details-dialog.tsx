@@ -341,4 +341,3 @@ export function ViewDetailsDialog({ open, onOpenChange, saleId }: ViewDetailsDia
     </Dialog>
   )
 }
-

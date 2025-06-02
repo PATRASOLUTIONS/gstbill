@@ -54,4 +54,3 @@ export function PurchaseStats({ totalPurchases, pendingDeliveries, receivedOrder
     </div>
   )
 }
-

@@ -182,4 +182,3 @@ export function ViewPurchaseDetailsDialog({ open, onOpenChange, purchaseId }: Pu
     </Dialog>
   )
 }
-

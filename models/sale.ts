@@ -113,4 +113,3 @@ saleSchema.index({ orderId: 1, createdBy: 1 }, { unique: true, sparse: true })
 const Sale = mongoose.models.Sale || mongoose.model("Sale", saleSchema)
 
 export default Sale
-

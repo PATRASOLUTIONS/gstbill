@@ -54,4 +54,3 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     return NextResponse.json({ error: "Failed to update sidebar permissions" }, { status: 500 })
   }
 }
-

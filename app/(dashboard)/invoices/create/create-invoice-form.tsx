@@ -725,4 +725,3 @@ export function CreateInvoiceForm() {
     </div>
   )
 }
-

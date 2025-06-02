@@ -95,4 +95,3 @@ const supplierSchema = new Schema<ISupplier>(
 const Supplier = models.Supplier || model<ISupplier>("Supplier", supplierSchema)
 
 export default Supplier
-

@@ -105,4 +105,3 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     return NextResponse.json({ error: "Failed to convert invoice to sale" }, { status: 500 })
   }
 }
-

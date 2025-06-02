@@ -30,4 +30,3 @@ declare module "react-csv" {
 
   export const CSVDownload: ComponentType<CSVDownloadProps>
 }
-

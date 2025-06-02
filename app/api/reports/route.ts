@@ -240,4 +240,3 @@ async function getTopSellingProducts(userEmail: string) {
     return []
   }
 }
-

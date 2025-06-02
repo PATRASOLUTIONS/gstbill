@@ -476,4 +476,3 @@ const InvoicePDF = ({ invoiceData, calculations }: InvoicePDFProps) => {
     </Document>
   )
 }
-

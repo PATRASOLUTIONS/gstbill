@@ -38,4 +38,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Failed to fix indexes", details: error.toString() }, { status: 500 })
   }
 }
-

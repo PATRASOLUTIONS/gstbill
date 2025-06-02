@@ -258,4 +258,3 @@ export function ViewRefundDetailsDialog({ open, onOpenChange, refund, onRefresh 
     </Dialog>
   )
 }
-

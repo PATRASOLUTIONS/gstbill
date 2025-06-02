@@ -1165,4 +1165,3 @@ export function CreateSaleDialog({ open, onOpenChange, onSaleCreated }: CreateSa
     </>
   )
 }
-

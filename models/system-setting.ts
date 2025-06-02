@@ -29,4 +29,3 @@ const SystemSetting =
   mongoose.models.SystemSetting || mongoose.model<ISystemSetting>("SystemSetting", systemSettingSchema)
 
 export default SystemSetting
-

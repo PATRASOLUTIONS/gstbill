@@ -232,4 +232,3 @@ export function CustomerPermissionsTable({ customers, onPermissionsUpdated }: Cu
     </>
   )
 }
-

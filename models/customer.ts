@@ -56,4 +56,3 @@ const customerSchema = new Schema<ICustomer>(
 const Customer = mongoose.models.Customer || mongoose.model<ICustomer>("Customer", customerSchema)
 
 export default Customer
-

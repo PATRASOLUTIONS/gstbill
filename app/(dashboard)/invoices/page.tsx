@@ -9,4 +9,3 @@ export const metadata: Metadata = {
 export default async function InvoicesPage() {
   return <InvoicesClient />
 }
-

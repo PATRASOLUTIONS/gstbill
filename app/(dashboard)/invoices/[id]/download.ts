@@ -29,4 +29,3 @@ export async function downloadInvoice(id: string) {
     }
   }
 }
-

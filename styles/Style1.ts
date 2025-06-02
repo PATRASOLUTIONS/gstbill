@@ -143,4 +143,3 @@ const Styles1 = StyleSheet.create({
 })
 
 export default Styles1
-

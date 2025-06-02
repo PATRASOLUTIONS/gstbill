@@ -66,4 +66,3 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     return NextResponse.json({ message: "Failed to update product quantity" }, { status: 500 })
   }
 }
-

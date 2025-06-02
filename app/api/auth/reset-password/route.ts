@@ -30,4 +30,3 @@ export { handler as POST }
 
 // If this file exists and uses bcrypt, update it to use bcryptjs
 // This is just a placeholder - we'll need to update the actual file if it exists
-

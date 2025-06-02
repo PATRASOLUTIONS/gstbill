@@ -244,4 +244,3 @@ export function RefundDetailsClient({ id }: RefundDetailsClientProps) {
     </div>
   )
 }
-

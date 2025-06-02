@@ -163,4 +163,3 @@ export async function exportProducts(format: string, products: Product[]) {
     return false
   }
 }
-

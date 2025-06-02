@@ -30,4 +30,3 @@ export interface Sale {
   invoiceId?: string
   invoiceNumber?: string
 }
-

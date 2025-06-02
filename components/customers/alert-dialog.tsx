@@ -75,4 +75,3 @@ export function AlertDialog({ customerId }: AlertDialogProps) {
     </ShadcnAlertDialog>
   )
 }
-

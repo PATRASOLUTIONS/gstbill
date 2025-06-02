@@ -119,4 +119,3 @@ export async function deleteCustomer(id: string) {
     throw new Error("Failed to delete customer")
   }
 }
-

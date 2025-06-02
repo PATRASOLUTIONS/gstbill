@@ -82,4 +82,3 @@ export const collections = {
     return db.collection("refunds")
   },
 }
-

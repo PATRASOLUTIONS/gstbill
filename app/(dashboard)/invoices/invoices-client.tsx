@@ -73,4 +73,3 @@ export function InvoicesClient() {
     </div>
   )
 }
-

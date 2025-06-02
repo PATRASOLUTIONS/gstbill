@@ -61,4 +61,3 @@ export function useSafeAction<T = any>({
 
   return { execute, isLoading, error, clearError }
 }
-

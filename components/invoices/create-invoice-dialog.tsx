@@ -94,4 +94,3 @@ export function CreateInvoiceDialog({ open, setOpen }: CreateInvoiceDialogProps)
     </Dialog>
   )
 }
-

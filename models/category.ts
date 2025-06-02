@@ -42,4 +42,3 @@ const categorySchema = new Schema<ICategory>(
 const Category = models.Category || model<ICategory>("Category", categorySchema)
 
 export default Category
-

@@ -1709,4 +1709,3 @@ export default function SalesPageClient() {
     </ErrorBoundary>
   )
 }
-

@@ -38,4 +38,3 @@ const BankSchema = new Schema(
 )
 
 export default mongoose.models.Bank || mongoose.model<BankDocument>("Bank", BankSchema)
-

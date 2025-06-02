@@ -14,4 +14,3 @@ export interface Refund {
   date: Date
   items: SaleItem[]
 }
-

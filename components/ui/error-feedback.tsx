@@ -19,4 +19,3 @@ export function ErrorFeedback({ error }: ErrorFeedbackProps) {
     </Alert>
   )
 }
-

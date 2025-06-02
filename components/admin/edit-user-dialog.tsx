@@ -231,4 +231,3 @@ export function EditUserDialog({ user, open, onOpenChange, onUserUpdated }: Edit
     </Dialog>
   )
 }
-

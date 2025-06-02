@@ -52,4 +52,3 @@ export function CalendarDateRangePicker({ className, dateRange, onDateRangeChang
     </div>
   )
 }
-

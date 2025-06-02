@@ -47,4 +47,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Failed to generate next sale ID" }, { status: 500 })
   }
 }
-

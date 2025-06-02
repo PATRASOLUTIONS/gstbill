@@ -101,4 +101,3 @@ export function formatRelativeTime(date: string | Date | number | undefined | nu
     return "Error"
   }
 }
-

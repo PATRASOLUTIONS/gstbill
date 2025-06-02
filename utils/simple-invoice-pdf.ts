@@ -130,4 +130,3 @@ export async function generateSimpleInvoicePdf(invoiceData: any): Promise<jsPDF>
     return doc
   }
 }
-

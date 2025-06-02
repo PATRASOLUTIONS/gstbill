@@ -68,4 +68,3 @@ export const generateId = () => {
 
 // Export the database connection
 export const db = { connect: connectToDatabase, collections, generateId }
-

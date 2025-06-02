@@ -177,4 +177,3 @@ export function ViewSaleDetailsDialog({ open, onOpenChange, saleId }: ViewSaleDe
     </Dialog>
   )
 }
-

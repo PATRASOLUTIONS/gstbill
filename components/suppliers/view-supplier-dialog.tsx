@@ -78,4 +78,3 @@ export function ViewSupplierDialog({ children, supplier }: ViewSupplierDialogPro
     </Dialog>
   )
 }
-

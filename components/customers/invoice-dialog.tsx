@@ -281,4 +281,3 @@ export function InvoiceDialog({ customerId, customerName }: InvoiceDialogProps) 
     </Dialog>
   )
 }
-

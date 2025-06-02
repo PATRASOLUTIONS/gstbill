@@ -67,4 +67,3 @@ export function toWords(num: number): string {
 
 // Add the missing export that's being referenced elsewhere in the code
 export const numberToWords = toWords
-

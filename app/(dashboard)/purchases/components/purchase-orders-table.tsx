@@ -146,4 +146,3 @@ export function PurchaseOrdersTable({ status }: PurchaseOrdersTableProps) {
     </div>
   )
 }
-

@@ -83,4 +83,3 @@ export function DeleteSaleDialog({ open, onOpenChange, saleId, onDeleted }: Dele
     </Dialog>
   )
 }
-

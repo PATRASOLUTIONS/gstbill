@@ -1252,4 +1252,3 @@ export function CreateSalePage() {
     </div>
   )
 }
-

@@ -80,4 +80,3 @@ export function ViewSupplierDialog({ supplier, open, onOpenChange }: ViewSupplie
     </Dialog>
   )
 }
-

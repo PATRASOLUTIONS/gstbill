@@ -143,4 +143,3 @@ async function generateErrorPDF() {
 
   return Buffer.from(doc.output("arraybuffer"))
 }
-

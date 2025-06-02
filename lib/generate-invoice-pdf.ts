@@ -427,4 +427,3 @@ export async function createInvoicePDF(invoiceData: any): Promise<jsPDF> {
   // Generate the PDF
   return generateInvoicePDF(formattedInvoice, formattedCompany, formattedCustomer, formattedBank)
 }
-

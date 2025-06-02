@@ -46,4 +46,3 @@ export async function GET() {
     return NextResponse.json({ error: "Failed to fetch user permissions" }, { status: 500 })
   }
 }
-

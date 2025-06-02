@@ -21,4 +21,3 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: "An error occurred while saving bank details" }, { status: 500 })
   }
 }
-

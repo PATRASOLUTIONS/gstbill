@@ -218,4 +218,3 @@ export function CreateRefundDialog({ open, onOpenChange, onRefundCreated }: Crea
     </Dialog>
   )
 }
-

@@ -34,4 +34,3 @@ export function TableSkeleton({ columns, rows }: TableSkeletonProps) {
     </div>
   )
 }
-

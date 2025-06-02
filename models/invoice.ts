@@ -143,4 +143,3 @@ const InvoiceSchema = new Schema(
 )
 
 export default mongoose.models.Invoice || mongoose.model<InvoiceDocument>("Invoice", InvoiceSchema)
-

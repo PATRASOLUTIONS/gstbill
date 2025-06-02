@@ -37,4 +37,3 @@ export function DataTablePagination({ totalItems, pageSize, currentPage, onPageC
     </div>
   )
 }
-

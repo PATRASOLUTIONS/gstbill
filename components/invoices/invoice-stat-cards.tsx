@@ -100,4 +100,3 @@ export function InvoiceStatCards({ stats, isLoading }: InvoiceStatsProps) {
     </div>
   )
 }
-

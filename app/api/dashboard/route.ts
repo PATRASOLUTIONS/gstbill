@@ -337,4 +337,3 @@ function determineTotalField(sampleDoc: any) {
   // Default to total
   return "total"
 }
-

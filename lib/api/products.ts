@@ -45,4 +45,3 @@ export async function updateProduct(id: string, product: Partial<Product>): Prom
     throw error
   }
 }
-

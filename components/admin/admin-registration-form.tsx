@@ -153,4 +153,3 @@ export function AdminRegistrationForm() {
 // Also provide a default export that re-exports the named export
 // This ensures compatibility with both import styles
 export default AdminRegistrationForm
-

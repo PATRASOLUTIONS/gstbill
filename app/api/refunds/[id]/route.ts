@@ -77,4 +77,3 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     return NextResponse.json({ error: "Failed to update refund" }, { status: 500 })
   }
 }
-

@@ -13,4 +13,3 @@ export default function RefundDetailsPage({
 }) {
   return <RefundDetailsClient id={params.id} />
 }
-

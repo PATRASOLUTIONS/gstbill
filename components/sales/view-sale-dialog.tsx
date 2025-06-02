@@ -274,4 +274,3 @@ export function ViewSaleDialog({ open, onOpenChange, saleId }: ViewSaleDialogPro
     </Dialog>
   )
 }
-
